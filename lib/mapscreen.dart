@@ -57,34 +57,57 @@ class MapScreenState extends State<MapScreen> {
       // Handle the error (e.g., permission denied, location unavailable)
       print("Error getting location: $e");
       setState(() {
-        _loading = false; // Stop loading even if there's an error
+        _loading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('My Current Location'),
-      ),
-      body: _loading
-          ? Center(child: CircularProgressIndicator())
-          : GoogleMap(
-              onMapCreated: (GoogleMapController controller) {
-                mapController = controller;
-              },
-              initialCameraPosition: CameraPosition(
-                target: _currentPosition,
-                zoom: 15,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 80,
+          backgroundColor: const Color.fromARGB(255, 176, 230, 239),
+          title: Row(
+            children: [
+              Image.asset(
+                'assets/valknut.png',
+                height: 60,
               ),
-              markers: {
-                Marker(
-                  markerId: MarkerId('currentLocation'),
-                  position: _currentPosition,
+              SizedBox(width: 60),
+              Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // Center vertically
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // Center horizontally
+                children: [
+                  Text('Built by Dmitri'),
+                  Text('flutify.co.za'),
+                ],
+              )
+            ],
+          ),
+          centerTitle: true,
+        ),
+        body: _loading
+            ? Center(child: CircularProgressIndicator())
+            : GoogleMap(
+                onMapCreated: (GoogleMapController controller) {
+                  mapController = controller;
+                },
+                initialCameraPosition: CameraPosition(
+                  target: _currentPosition,
+                  zoom: 15,
                 ),
-              },
-            ),
+                markers: {
+                  Marker(
+                    markerId: MarkerId('currentLocation'),
+                    position: _currentPosition,
+                  ),
+                },
+              ),
+      ),
     );
   }
 }
