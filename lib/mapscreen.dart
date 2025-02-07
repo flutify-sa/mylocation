@@ -68,7 +68,7 @@ class MapScreenState extends State<MapScreen> {
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 80,
-          backgroundColor: const Color.fromARGB(255, 176, 230, 239),
+          backgroundColor: const Color.fromARGB(255, 208, 226, 230),
           title: Row(
             children: [
               Image.asset(
