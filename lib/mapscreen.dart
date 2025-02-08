@@ -1,7 +1,8 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -9,11 +10,10 @@ class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
   @override
-  MapScreenState createState() => MapScreenState();
+  State<MapScreen> createState() => MapScreenState();
 }
 
 class MapScreenState extends State<MapScreen> {
-  late GoogleMapController mapController;
   LatLng _currentPosition = LatLng(0, 0);
   bool _loading = true;
 
@@ -26,88 +26,98 @@ class MapScreenState extends State<MapScreen> {
   Future<void> requestLocationPermission() async {
     var status = await Permission.location.status;
     if (status.isDenied) {
-      // Request permission
       await Permission.location.request();
     }
-    // Check if the permission is permanently denied
     if (await Permission.location.isPermanentlyDenied) {
-      // Open app settings
       openAppSettings();
     }
   }
 
   Future<void> _getCurrentLocation() async {
-    // Request location permission
     await requestLocationPermission();
+    var status = await Permission.location.status;
 
-    // Get the current position with LocationSettings
-    LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // Optional: Set the distance filter
-    );
-
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          locationSettings: locationSettings);
+    if (status.isGranted) {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        );
+        setState(() {
+          _currentPosition = LatLng(position.latitude, position.longitude);
+          _loading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _loading = false;
+        });
+        print("Error getting location: $e");
+      }
+    } else {
       setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
         _loading = false;
       });
-    } catch (e) {
-      // Handle the error (e.g., permission denied, location unavailable)
-      print("Error getting location: $e");
-      setState(() {
-        _loading = false;
-      });
+      print("Location permission denied");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 80,
-          backgroundColor: const Color.fromARGB(255, 208, 226, 230),
-          title: Row(
-            children: [
-              Image.asset(
-                'assets/valknut.png',
-                height: 60,
-              ),
-              SizedBox(width: 60),
-              Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Center vertically
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // Center horizontally
-                children: [
-                  Text('Built by Dmitri'),
-                  Text('flutify.co.za'),
-                ],
-              )
-            ],
-          ),
-          centerTitle: true,
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 80,
+        backgroundColor: const Color.fromARGB(255, 208, 226, 230),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/valknut.png',
+              height: 60,
+            ),
+            SizedBox(width: 60),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // Center horizontally
+              children: [
+                Text('Built by Dmitri'),
+                Text('flutify.co.za'),
+              ],
+            )
+          ],
         ),
-        body: _loading
-            ? Center(child: CircularProgressIndicator())
-            : GoogleMap(
-                onMapCreated: (GoogleMapController controller) {
-                  mapController = controller;
-                },
-                initialCameraPosition: CameraPosition(
-                  target: _currentPosition,
-                  zoom: 15,
-                ),
-                markers: {
-                  Marker(
-                    markerId: MarkerId('currentLocation'),
-                    position: _currentPosition,
-                  ),
-                },
-              ),
+        centerTitle: true,
       ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : FlutterMap(
+              options: MapOptions(
+                center: _currentPosition,
+                zoom: 15,
+              ),
+              nonRotatedChildren: const [], // Add this line
+              children: [
+                TileLayer(
+                  // Changed from TileLayerOptions
+                  urlTemplate:
+                      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  subdomains: const ['a', 'b', 'c'],
+                ),
+                MarkerLayer(
+                  // Changed from MarkerLayerOptions
+                  markers: [
+                    Marker(
+                      point: _currentPosition,
+                      width: 80,
+                      height: 80,
+                      builder: (ctx) =>
+                          const Icon(Icons.location_pin, color: Colors.red),
+                    ),
+                  ],
+                ),
+              ],
+            ),
     );
   }
 }
