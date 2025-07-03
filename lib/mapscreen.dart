@@ -34,6 +34,14 @@ class MapScreenState extends State<MapScreen> {
       _getCurrentLocation();
     });
   }
+void _resetTracking() {
+  setState(() {
+    _trackedPositions.clear();
+    _currentPosition = LatLng(0, 0);
+    _address = 'Tracking reset';
+    _localTime = '';
+  });
+}
 
   @override
   void dispose() {
@@ -157,13 +165,19 @@ class MapScreenState extends State<MapScreen> {
           ],
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _getCurrentLocation, // Call the refresh function
-            tooltip: 'Refresh Location', // Optional: shows on long press
-          ),
-        ],
+ actions: [
+  IconButton(
+    icon: const Icon(Icons.restart_alt),
+    onPressed: _resetTracking,
+    tooltip: 'Reset Tracking',
+  ),
+  IconButton(
+    icon: const Icon(Icons.refresh),
+    onPressed: _getCurrentLocation,
+    tooltip: 'Refresh Location',
+  ),
+],
+
       ),
       body: Stack(
         children: [
